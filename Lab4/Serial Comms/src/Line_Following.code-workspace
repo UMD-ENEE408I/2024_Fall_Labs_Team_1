@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../Line_Following"
+		},
+		{
+			"name": "Serial Comms",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
