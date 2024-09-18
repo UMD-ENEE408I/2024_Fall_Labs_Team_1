@@ -232,3 +232,50 @@ void loop() {
 
   }
 }
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+import numpy as np
+import matplotlib.pyplot as plt
+
+time = 0
+integral = 0
+time_prev = -1e-6
+e_prev = 0
+
+  def PID(Kp, Ki, Kd, setpoint, measurement):
+    global time, integral, time_prev, e_prev
+
+    # Value of offset - when the error is equal zero
+    offset = 320
+    
+    # PID calculations
+    e = setpoint - measurement
+        
+    P = Kp*e
+    integral = integral + Ki*e*(time - time_prev)
+    D = Kd*(e - e_prev)/(time - time_prev)
+
+    # calculate manipulated variable - MV 
+    MV = offset + P + integral + D
+    
+    # update stored data for next iteration
+    e_prev = e
+    time_prev = time
+    return MV
+
+  def system(t, temp, Tq):
+    epsilon = 1
+    tau = 4
+    Tf = 300
+    Q = 2
+    dTdt = 1/(tau*(1+epsilon)) * (Tf-temp) + Q/(1+epsilon)*(Tq-temp)
+    return dTdt
+
+  tspan = np.linspace(0,10,50)
+Tq = 320,
+sol = odeint(system,300, tspan, args=Tq, tfirst=True)
+plt.xlabel('Time')
+plt.ylabel('Temperature')
+plt.plot(tspan,sol)
+
