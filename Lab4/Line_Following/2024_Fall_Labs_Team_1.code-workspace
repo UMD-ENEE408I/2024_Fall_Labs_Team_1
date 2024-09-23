@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"name": "Line_Following",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
