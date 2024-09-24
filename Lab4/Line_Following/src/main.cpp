@@ -62,7 +62,7 @@ const float Kp = 2;
 const float Kd = 50;
 const float Ki = 0;
 
-void turn_to(float target);
+void turn_to(float, bool);
 
 /*
  *  Line sensor functions
@@ -171,10 +171,10 @@ void M2_stop()
 
 void turnCorner(bool cc)
 {
-  turn_to(3.14/2.0);
+  turn_to(3.14/2.0, cc);
 }
 
-void turn_to(float target)
+void turn_to(float target, bool cc)
 {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
@@ -182,25 +182,33 @@ void turn_to(float target)
   float curr = 0;
   unsigned long prevtime = millis();
 
-  while (curr < target)
+  while (abs(curr - target) > 0.1)
   {
     Serial.print("turning... curr: " + String(curr) + " target: " + String(target));
     // spin motors opposite direction
-    M1_forward(TURN_PWM);
-    M2_backward(TURN_PWM);
+    if (cc) {
+      M1_forward(TURN_PWM);
+      M2_backward(TURN_PWM);
+    } else {
+      M2_forward(TURN_PWM);
+      M1_backward(TURN_PWM);
+    }
 
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
     unsigned long t = millis();
-    Serial.println(" | " + String(float(t - prevtime) / 1000.0) + " | " + String(g.gyro.x));
+    Serial.println(" | " + String(float(t - prevtime) / 1000.0) + " | " + String(g.gyro.z));
     
     // threshold in case of not moving (IMU sill reads small rotation)
-    if (abs(g.gyro.x) > 0.1) 
+    if (abs(g.gyro.z) > 0.1) 
     {
-      curr += (float(t - prevtime) / 1000.0) * g.gyro.x; // update current heading (sec * rad/sec = rads traveled)
+      curr += (float(t - prevtime) / 1000.0) * g.gyro.z; // update current heading (sec * rad/sec = rads traveled)
     }
     prevtime = t;
+    delay(5);
   }
+
+  Serial.println("Finished Turning.");
 
   M1_stop();
   M2_stop();
@@ -318,9 +326,12 @@ void setup()
   M2_stop();
 
   //IMU_setup();
+  turnCorner(1);
 
   delay(100);
 }
+
+int32_t weights[13] = {-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6};
 
 void loop()
 {
@@ -357,19 +368,17 @@ void loop()
     integral += error * dt;
     float derivative = (error - prev_error) / dt;
 
-    //Serial.println("dt: " + String(dt));
-
     // PID output
     u = Kp * error + Ki * integral + Kd * derivative;
 
-    //Serial.println("err: + " + String(error) + "; int: " + String(integral) + "; der: " + String(derivative));
+    Serial.println("err: + " + String(error) + "; int: " + String(integral) + "; der: " + String(derivative));
 
 
     // Calculate PWM values for motors
     rightWheelPWM = ((base_pid + u) < 0) ? 0 : ( ((base_pid + u) > PWM_MAX) ? PWM_MAX : (base_pid + u));
     leftWheelPWM = ((base_pid - u) < 0) ? 0 : ( ((base_pid - u) > PWM_MAX) ? PWM_MAX : (base_pid - u));
 
-    //Serial.println("u: + " + String(u) + "; rpwm: " + String(rightWheelPWM) + "; lpwm: " + String(leftWheelPWM));
+    Serial.println("u: + " + String(u) + "; rpwm: " + String(rightWheelPWM) + "; lpwm: " + String(leftWheelPWM));
 
     // Control motors
     M1_forward(rightWheelPWM);
@@ -381,13 +390,26 @@ void loop()
     prev_pos = pos;
 
     // Check for corners (condition to be defined)
-    if (0)
+    int weighted_sum = 0;
+    for (int i = 0; i < 13; i ++)
+    {
+      weighted_sum += weights[i]*lineArray[i];
+    }
+
+    if (weighted_sum < -12)
     {
       M1_stop();
       M2_stop();
       delay(1000);
       turnCorner(1); // Implement corner turning logic
-      (void) getPosition();
+    }
+
+    if (weighted_sum > 12)
+    {
+      M1_stop();
+      M2_stop();
+      delay(1000);
+      turnCorner(0); // Implement corner turning logic
     }
 
     delay(10);
