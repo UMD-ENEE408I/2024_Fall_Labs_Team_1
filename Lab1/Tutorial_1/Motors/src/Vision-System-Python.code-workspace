@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../dummycode/Vision-System-Python"
+		},
+		{
+			"name": "Serial Comms",
+			"path": "../../../../Lab4/Serial Comms"
+		},
+		{
+			"name": "Motors",
+			"path": ".."
+		},
+		{
+			"name": "Line_Following",
+			"path": "../../../../Lab4/Line_Following"
+		}
+	],
+	"settings": {}
+}

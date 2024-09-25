@@ -13,10 +13,8 @@ const unsigned int M2_IN_2_CHANNEL = 11;
 const unsigned int M1_I_SENSE = 35;
 const unsigned int M2_I_SENSE = 34;
 
-const unsigned int PWM_VALUE = 512; // Do not give max PWM. Robot will move fast
-
 const int freq = 5000;
-const int resolution = 10;
+const int resolution = 8;
 
 
 void setup() {
@@ -38,16 +36,16 @@ void setup() {
 }
 
 void loop() {
-  ledcWrite(M1_IN_1_CHANNEL, 150);
+  ledcWrite(M1_IN_1_CHANNEL, 200);
   ledcWrite(M1_IN_2_CHANNEL, 0);
-  ledcWrite(M2_IN_1_CHANNEL, 150);
+  ledcWrite(M2_IN_1_CHANNEL, 200);
   ledcWrite(M2_IN_2_CHANNEL, 0);
   delay(500);
 
   ledcWrite(M1_IN_1_CHANNEL, 0);
-  ledcWrite(M1_IN_2_CHANNEL, 150);
+  ledcWrite(M1_IN_2_CHANNEL, 200);
   ledcWrite(M2_IN_1_CHANNEL, 0);
-  ledcWrite(M2_IN_2_CHANNEL, 150);
+  ledcWrite(M2_IN_2_CHANNEL, 200);
   delay(500);
 
 }

@@ -169,6 +169,67 @@ void M2_stop()
   ledcWrite(M2_IN_2_CHANNEL, PWM_MAX);
 }
 
+const int encoderCountsPerRevolution = 360; // Adjust based on your motor specs
+const float wheelCircumference = 0.2; // Example: 20 cm (adjust to your robot)
+const float turnRadius = 0.1; // Example: 10 cm (distance from center to wheel)
+const float turnAngleDegrees = 90; // 90-degree turn
+float distanceToTravel = (PI * turnRadius * (turnAngleDegrees / 180)); // Declare this globally
+int encoderCountsForTurn = (distanceToTravel / wheelCircumference) * encoderCountsPerRevolution;
+// Declare this as an integer
+
+
+void turnCorner(bool cc)
+{
+ Serial.println("Turn To Called");
+ //turn_to(PI/2,cc); //90 degrees in rad
+ if (cc) {
+   // Turn 90 degrees counterclockwise
+   turn_to(encoderCountsForTurn, true);
+ } else {
+   // Turn 90 degrees clockwise
+   turn_to(encoderCountsForTurn, false);
+ }
+
+
+}
+
+
+void turn_to(float target, bool cc)
+{
+ Encoder enc1(M1_ENC_A, M1_ENC_B);
+ Encoder enc2(M2_ENC_A, M2_ENC_B);
+  enc1.write(0);
+ enc2.write(0);
+  int targetCounts = encoderCountsForTurn;
+
+
+ // Start turning
+ if (cc) {
+   M1_forward(TURN_PWM);
+   M2_backward(TURN_PWM);
+ } else {
+   M1_backward(TURN_PWM);
+   M2_forward(TURN_PWM);
+ }
+
+
+ Serial.println("Target: " + String(targetCounts));
+
+
+ while (abs(enc1.read()) < targetCounts) {
+   // Keep turning until the target encoder count is reached
+   Serial.println("Enc1: " + String(enc1.read()));
+   delay(10); // Short delay to avoid busy-waiting
+ }
+
+
+ // Stop the motors
+ M1_stop();
+ M2_stop();
+ Serial.println("Finished Turning.");
+}
+
+/*
 void turnCorner(bool cc)
 {
   turn_to(3.14/2.0, cc);
@@ -213,6 +274,7 @@ void turn_to(float target, bool cc)
   M1_stop();
   M2_stop();
 }
+
 
 void IMU_setup()
 {
@@ -298,6 +360,7 @@ void IMU_setup()
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 }
+*/
 
 /*
  *  setup and loop
@@ -326,7 +389,7 @@ void setup()
   M2_stop();
 
   //IMU_setup();
-  turnCorner(1);
+  //turnCorner(1);
 
   delay(100);
 }
