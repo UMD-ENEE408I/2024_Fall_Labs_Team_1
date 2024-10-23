@@ -37,6 +37,11 @@ def message_received(client, server: WebsocketServer, message):
     elif message['op'] == 'audio':
         audio_processing.enqueue(message)
 
+def get_ip_from_name(name_to_find):
+    for client in ws_server.clients:
+        if client['name'] == name_to_find:
+            return client['address'][0]
+
 def send_to_client(message):
     for client in ws_server.clients:
         if client['name'] == message['name']:
