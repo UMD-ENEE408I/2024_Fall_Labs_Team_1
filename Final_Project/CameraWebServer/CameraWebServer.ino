@@ -1,5 +1,9 @@
 #include "esp_camera.h"
 #include <WiFi.h>
+//#include <ArduinoWebsockets.h>
+//#include <ArduinoJson.h>
+#include <DNSServer.h>
+#include <WebServer.h>
 
 //
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
@@ -40,6 +44,10 @@ const char *ssid = "VisionSystem1120-2.4";
 
 void startCameraServer();
 void setupLedFlash(int pin);
+//
+//using namespace websockets;
+//WebsocketsClient client;
+//byte buff[500];
 
 void setup() {
   Serial.begin(115200);
@@ -132,6 +140,14 @@ void setup() {
   setupLedFlash(LED_GPIO_NUM);
 #endif
 
+  IPAddress local_IP(192,168,1,101);
+  IPAddress gateway(192,168,1,1);
+  IPAddress subnet(255,255,255,0);
+
+  if (!WiFi.config(local_IP, gateway, subnet)) {
+    Serial.println("ruh roh static ip");
+  }
+
   WiFi.begin(ssid);
   WiFi.setSleep(false);
 
@@ -147,6 +163,31 @@ void setup() {
   Serial.print("Camera Ready! Use 'http://");
   Serial.print(WiFi.localIP());
   Serial.println("' to connect");
+  
+  delay(1000);
+  
+//  client.onMessage([&](WebsocketsMessage message){
+//        Serial.print("Got Message: ");
+//        Serial.println(message.data());
+//    });
+//  client.connect("ws://172.20.80.1:7000");
+//
+//  if (!client.available()) {
+//      Serial.println("Failed to connect (websocket)...");
+//      Serial.flush();
+//      delay(1000);
+//      ESP.restart();
+//  }
+  
+  //Serial.println("Connected to websocket");
+
+  delay(1000);
+  
+//  StaticJsonDocument<100> doc;
+//  doc["op"] = "begin";
+//  doc["name"] = "espcam";
+//  serializeJson(doc, buff);
+//  client.send(reinterpret_cast<const char *>(buff));
 }
 
 void loop() {

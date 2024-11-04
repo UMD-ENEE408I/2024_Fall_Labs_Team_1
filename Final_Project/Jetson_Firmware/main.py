@@ -9,7 +9,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 def main():
     threading.Thread(name='ESP Server Start', target=client_server.start_server, daemon=True).start()
-    threading.Thread(name='Audio Processing Start', target=audio_processing.start_handler_thread, daemon=True).start()
+    #threading.Thread(name='Audio Processing Start', target=audio_processing.start_handler_thread, daemon=True).start()
     threading.Thread(name='Image Processing Start', target=image_processing.start_handler_thread, daemon=True).start()
 
     # "Buzz 4 Times"

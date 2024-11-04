@@ -47,6 +47,7 @@ def send_to_client(message):
         if client['name'] == message['name']:
             ws_server.send_message(client, json.dumps(message))
             return 0
+    logging.info(f'Couldn\'t find client {message['name']}')
     return 1
 
 def start_server():
