@@ -26,6 +26,7 @@ private:
     void M2_backward(int pwm_value);
     void M1_stop();
     void M2_stop();
+    void turn_to(float target, bool cc);
 
     // Pin configuration and constants
     const unsigned int ADC_1_CS = 2;
@@ -35,10 +36,27 @@ private:
     const unsigned int M2_IN_1 = 25;
     const unsigned int M2_IN_2 = 14;
 
+    const unsigned int M1_I_SENSE = 35;
+    const unsigned int M2_I_SENSE = 34;
+
     const unsigned int M1_IN_1_CHANNEL = 8;
     const unsigned int M1_IN_2_CHANNEL = 9;
     const unsigned int M2_IN_1_CHANNEL = 10;
     const unsigned int M2_IN_2_CHANNEL = 11;
+
+    const unsigned int M1_ENC_A = 39;
+    const unsigned int M1_ENC_B = 38;
+    const unsigned int M2_ENC_A = 37;
+    const unsigned int M2_ENC_B = 36;
+
+    const int encoderCountsPerRevolution = 360;
+    const float wheelCircumference = 0.2;
+    const float turnRadius = 0.1;
+    const float turnAngleDegrees = 90;
+    float distanceToTravel = (PI * turnRadius * (turnAngleDegrees / 180));
+
+    // 90 deg turn encoder count needed:
+    int encoderCountsForTurn = (distanceToTravel / wheelCircumference) * encoderCountsPerRevolution;
 
     const unsigned int PWM_MAX = 110;
     const unsigned int TURN_PWM = 90;

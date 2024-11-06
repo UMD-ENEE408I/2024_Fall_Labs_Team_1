@@ -18,6 +18,9 @@ void LineFollower::begin() {
     adc1.begin(ADC_1_CS);
     adc2.begin(ADC_2_CS);
 
+    pinMode(M1_I_SENSE, INPUT);
+    pinMode(M2_I_SENSE, INPUT);
+
     M1_stop();
     M2_stop();
 
@@ -118,26 +121,40 @@ void LineFollower::M2_stop() {
 }
 
 void LineFollower::turnCorner(bool cc) {
-    Serial.println(cc ? "Turning Left.." : "Turning Right..");
+  turn_to(encoderCountsForTurn, cc);
+}
 
-    // Set direction for turning
-    if (cc) {
-        M1_forward(TURN_PWM);
-        M2_backward(TURN_PWM);
-       
-    } else {
-        M1_backward(TURN_PWM);
-        M2_forward(TURN_PWM);
-    
-    }
 
-    // Time-based turn; adjust delay for desired angle
-    delay(800);  // Adjust this delay to achieve a 90-degree turn based on your setup
+void LineFollower::turn_to(float target, bool cc)
+{
+  Encoder enc1(M1_ENC_A, M1_ENC_B);
+  Encoder enc2(M2_ENC_A, M2_ENC_B);
+  enc1.write(0);
+  enc2.write(0);
+  int targetCounts = encoderCountsForTurn;
 
-    // Stop the motors after the turn
-    M1_stop();
-    M2_stop();
-    Serial.println("Turn Complete");
+  if (cc)
+  {
+    M1_forward(TURN_PWM);
+    M2_backward(TURN_PWM);
+  }
+  else
+  {
+    M1_backward(TURN_PWM);
+    M2_forward(TURN_PWM);
+  }
+
+  Serial.println("Target: " + String(targetCounts));
+
+  while (abs(enc1.read()) < targetCounts)
+  {
+    Serial.println("Enc1: " + String(enc1.read()));
+    delay(10);
+  }
+  M1_stop();
+  M2_stop();
+  Serial.println("Finished Turning.");
+
 }
 
 void LineFollower::update() {
@@ -179,12 +196,14 @@ void LineFollower::update() {
     }
     Serial.print("Weighted Sum: ");
     Serial.println(weighted_sum);
-if (weighted_sum < -12) {
+    
+    if (weighted_sum < -12) {
         Serial.println("Detected left turn...");
         M1_stop();
         M2_stop();
         delay(1000); // Pause before turning
         turnCorner(true);  // Execute 90-degree left turn
+        return;
     }
 
     if (weighted_sum > 12) {
@@ -193,6 +212,7 @@ if (weighted_sum < -12) {
         M2_stop();
         delay(1000); // Pause before turning
         turnCorner(false);  // Execute 90-degree right turn
+        return;
     }
 
     delay(10);  // Adjust delay as needed
