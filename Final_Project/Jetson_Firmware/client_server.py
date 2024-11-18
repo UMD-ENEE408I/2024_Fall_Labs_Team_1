@@ -9,6 +9,7 @@ import image_processing, audio_processing
 from websocket_server import WebsocketServer
 
 ws_server: WebsocketServer
+plaintext_msg : str
 
 def new_client(client, server: WebsocketServer):
     logging.info(f"New ESP32 client connected and was given id {client['id']:d}.")
@@ -36,6 +37,27 @@ def message_received(client, server: WebsocketServer, message):
         image_processing.enqueue(message)
     elif message['op'] == 'audio':
         audio_processing.enqueue(message)
+    elif message['op'] == 'message_transfer':
+        if message['encrypted_message']:
+            msg_to_D = {
+                'op': 'encrypted_final',
+                'name': 'BotD',
+                'encrypted': message['encrypted_message'],
+                'key': message['key']
+            }
+            send_to_client(json.loads(msg_to_D))
+        else:
+            logging.debug('No Encrypted Message Provided ')
+    elif message['op'] == 'message_final':
+        if message['plaintext']:
+            logging.debug(f'Recieved plaintext: {message['plaintext']}')
+            if plaintext_msg == message['plaintext']:
+                logging.debug(f'Plaintext {message['plaintext']} is correct!')
+            else:
+                logging.debug(f'Plaintext {message['plaintext']} is incorrect :(')
+
+        else:
+            logging.debug('No Plaintext Message Provided ')
 
 def get_ip_from_name(name_to_find):
     for client in ws_server.clients:
@@ -50,9 +72,10 @@ def send_to_client(message):
     logging.info(f'Couldn\'t find client {message['name']}')
     return 1
 
-def start_server():
-    global ws_server
+def start_server(final_msg):
+    global ws_server, plaintext_msg
     ws_server = None
+    plaintext_msg = final_msg
 
     try:
         ws_server = WebsocketServer(host=socket.gethostbyname(socket.gethostname()), port=7000)

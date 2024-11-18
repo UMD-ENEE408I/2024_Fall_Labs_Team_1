@@ -40,7 +40,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char *ssid = "VisionSystem1120-2.4";
+const char *ssid = "enee408i";
+const char *pass = "enee408i";
 
 void startCameraServer();
 void setupLedFlash(int pin);
@@ -148,7 +149,7 @@ void setup() {
     Serial.println("ruh roh static ip");
   }
 
-  WiFi.begin(ssid);
+  WiFi.begin(ssid, pass);
   WiFi.setSleep(false);
 
   while (WiFi.status() != WL_CONNECTED) {

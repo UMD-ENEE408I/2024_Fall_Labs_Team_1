@@ -8,9 +8,6 @@ logging.basicConfig(format='[%(threadName)-16.16s] %(levelname)s: %(message)s')
 logging.getLogger().setLevel(logging.INFO)
 
 def main():
-    threading.Thread(name='ESP Server Start', target=client_server.start_server, daemon=True).start()
-    #threading.Thread(name='Audio Processing Start', target=audio_processing.start_handler_thread, daemon=True).start()
-    threading.Thread(name='Image Processing Start', target=image_processing.start_handler_thread, daemon=True).start()
 
     # "Buzz 4 Times"
     encrypted_buzz4 = [
@@ -23,7 +20,7 @@ def main():
 
     # "Buzz 5 Times"
     encrypted_buzz5 = [
-        'd7h+ha 077EAFEM4tWnCdpQ==', # enee408ikeynumb1
+        'd7h+ha077EAFEM4tWnCdpQ==', # enee408ikeynumb1
         '8J+g1s3JSzhMj75Mhw8ezw==', # keynumb2enee408i
         'dnobomxgHTHQKDFGLSPAeA==', # keythreeenee408i
         'XWeGA/AfPeMqzQFBI5/OBQ==', # capstone8keyfour
@@ -33,6 +30,7 @@ def main():
     encrypted_messages = [encrypted_buzz4, encrypted_buzz5]
 
     buzz_count = random.randrange(0, len(encrypted_messages))
+    plaintext_msg = f'Buzz {buzz_count+4} Times'
     encrypted_choice = random.randrange(0, 5)
 
     missing_block = encrypted_messages[buzz_count][encrypted_choice][0:8]
@@ -40,6 +38,10 @@ def main():
     logging.info(f'The Robot should buzz {buzz_count + 4} times!')
     logging.info(f'Encrypted message: {encrypted_messages[buzz_count][encrypted_choice]} encrypted with key {encrypted_choice}')
     logging.info(f'The Missing Block is: {missing_block}')
+
+    threading.Thread(name='ESP Server Start', target=client_server.start_server(plaintext_msg), daemon=True).start()
+    threading.Thread(name='Audio Processing Start', target=audio_processing.start_handler_thread, daemon=True).start()
+    threading.Thread(name='Image Processing Start', target=image_processing.start_handler_thread, daemon=True).start()
 
     msg_to_D = {
         'op': 'init_encrypt',
