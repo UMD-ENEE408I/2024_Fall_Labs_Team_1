@@ -27,7 +27,7 @@
 //#define CAMERA_MODEL_M5STACK_UNITCAM // No PSRAM
 //#define CAMERA_MODEL_M5STACK_CAMS3_UNIT  // Has PSRAM
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
-//#define CAMERA_MODEL_TTGO_T_JOURNAL // No PSRAM
+//#define CAMERA_MODEL_TTGO_T_JOURNAL // No PSRAM 
 //#define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 // ** Espressif Internal Boards **
 //#define CAMERA_MODEL_ESP32_CAM_BOARD
@@ -42,6 +42,7 @@
 // ===========================
 const char *ssid = "enee408i";
 const char *pass = "enee408i";
+//const char *ssid = "VisionSystem1120-2.4";
 
 void startCameraServer();
 void setupLedFlash(int pin);

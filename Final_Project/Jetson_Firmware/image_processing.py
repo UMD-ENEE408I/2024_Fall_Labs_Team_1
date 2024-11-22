@@ -15,6 +15,7 @@ mean = torch.Tensor([0.485, 0.456, 0.406]).cpu()
 std = torch.Tensor([0.229, 0.224, 0.225]).cpu()
 
 task_queue = queue.Queue()
+#model = torchvision.models.resnet18(weights='IMAGENET1K_V1')
 model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
 
 red_lower = np.array([136, 87, 111], np.uint8)
@@ -59,10 +60,21 @@ def processor():
 
         if result:
             if msg['model'] == 'crypto':
-                use_model = 'crypto.pth'
+
+                image = preprocess(image)
+
+                # categories must have been out of order :(
+                # key3 = 1 -> 0
+                # key5 = 4 -> 3
+                # key1 = 3 -> 2
+                # key4 = 5 -> 4
+                # key2 = 2 -> 1
+                use_model = 'crypto_20_it2_resnet50.pth'
                 dim = 5
 
-                model.fc = torch.nn.Linear(512, dim)
+                model_dict = {0: 3, 1: 2, 2: 1, 3: 5, 4: 4}
+
+                model.fc = torch.nn.Linear(2048, dim)#512, dim)
                 model = model.to(torch.device('cpu'))
 
                 logging.debug(f"Using model {use_model}...")
@@ -70,8 +82,15 @@ def processor():
 
                 model.eval()
                 output = model(image)
+                #logging.info(f'Init output: {output}')
+
                 output = F.softmax(output, dim=1).detach().cpu().numpy().flatten()
-                result_to_send = output.argmax()
+                pred = output.argmax()
+
+                result_to_send = model_dict[pred]
+
+                logging.info(f'Got prediction! Key {result_to_send}, ({output})')
+
             else:
                 hsvFrame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -106,8 +125,8 @@ def processor():
                 elif (maxi == blue_count):
                     result_to_send = 'BLUE'
 
-            if result_to_send:
-                    client_server.send_to_client({'name': msg['name'], 'image_result': result_to_send})
+            if result_to_send is not None:
+                    client_server.send_to_client({'name': msg['name'], 'image_result': str(result_to_send)})
             else:
                 logging.info(f'Failed to send result - is None')
         else:

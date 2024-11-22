@@ -10,6 +10,7 @@ from websocket_server import WebsocketServer
 
 ws_server: WebsocketServer
 plaintext_msg : str
+msg_to_send_bot_d : dict
 
 def new_client(client, server: WebsocketServer):
     logging.info(f"New ESP32 client connected and was given id {client['id']:d}.")
@@ -20,8 +21,8 @@ def client_left(client, _):
 def message_received(client, server: WebsocketServer, message):
 
     try:
-        message = json.loads(message)
-        if message is None:
+        msg_dict = json.loads(message)
+        if msg_dict is None:
             logging.debug(f"{client['id']:d} sent an empty message.")
             return
     except json.JSONDecodeError:
@@ -29,35 +30,40 @@ def message_received(client, server: WebsocketServer, message):
         logging.debug(f"{client['id']:d} sent an invalid message.")
         return
 
-    logging.info(f'Recieved Message: {message}')
+    logging.info(f'Recieved Message: {msg_dict}')
 
-    if message['op'] == 'begin':
-        client['name'] = message['name']
-    elif message['op'] == 'image':
-        image_processing.enqueue(message)
-    elif message['op'] == 'audio':
-        audio_processing.enqueue(message)
-    elif message['op'] == 'message_transfer':
-        if message['encrypted_message']:
+    if msg_dict['op'] == 'begin':
+        client['name'] = msg_dict['name']
+
+        if msg_dict['name'] == 'BotD':
+            logging.info(f'Sending to Bot D: {msg_to_send_bot_d}')
+            send_to_client(msg_to_send_bot_d)
+
+    elif msg_dict['op'] == 'image':
+        image_processing.enqueue(msg_dict)
+    elif msg_dict['op'] == 'audio':
+        audio_processing.enqueue(msg_dict)
+    elif msg_dict['op'] == 'message_transfer':
+        if msg_dict['encrypted_message']:
             msg_to_D = {
                 'op': 'encrypted_final',
                 'name': 'BotD',
-                'encrypted': message['encrypted_message'],
-                'key': message['key']
+                'encrypted': msg_dict['encrypted_message'],
+                'key': msg_dict['key']
             }
-            send_to_client(json.loads(msg_to_D))
+            send_to_client(msg_to_D)
         else:
-            logging.debug('No Encrypted Message Provided ')
-    elif message['op'] == 'message_final':
-        if message['plaintext']:
-            logging.debug(f'Recieved plaintext: {message['plaintext']}')
-            if plaintext_msg == message['plaintext']:
-                logging.debug(f'Plaintext {message['plaintext']} is correct!')
+            logging.info('No Encrypted Message Provided ')
+    elif msg_dict['op'] == 'message_final':
+        if msg_dict['plaintext']:
+            logging.info(f'Recieved plaintext: {msg_dict['plaintext']}')
+            if plaintext_msg == msg_dict['plaintext']:
+                logging.info(f'Plaintext {msg_dict['plaintext']} is correct!')
             else:
-                logging.debug(f'Plaintext {message['plaintext']} is incorrect :(')
+                logging.info(f'Plaintext {msg_dict['plaintext']} is incorrect :(')
 
         else:
-            logging.debug('No Plaintext Message Provided ')
+            logging.info('No Plaintext Message Provided ')
 
 def get_ip_from_name(name_to_find):
     for client in ws_server.clients:
@@ -72,10 +78,11 @@ def send_to_client(message):
     logging.info(f'Couldn\'t find client {message['name']}')
     return 1
 
-def start_server(final_msg):
-    global ws_server, plaintext_msg
+def start_server(final_msg, msg_to_d):
+    global ws_server, plaintext_msg, msg_to_send_bot_d
     ws_server = None
     plaintext_msg = final_msg
+    msg_to_send_bot_d = msg_to_d
 
     try:
         ws_server = WebsocketServer(host=socket.gethostbyname(socket.gethostname()), port=7000)
