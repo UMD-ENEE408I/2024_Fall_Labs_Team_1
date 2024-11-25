@@ -5,7 +5,7 @@
 #include "mbedtls/aes.h"
 #include "mbedtls/base64.h"
 
-#define WIFI_NETWORK "VisionSystem1120-2.4"
+#define WIFI_NETWORK "enee408i"
 
 using namespace websockets;
 WebsocketsClient client;
@@ -106,20 +106,21 @@ void onMessageCallback(const WebsocketsMessage &message) {
 
     Serial.println("Decrypted ASCII: " + final);
 
+    Serial.println("final[5] = ");
+    Serial.println(final[5]);
 
-    // Serial.println("Output[5] = ");
-    // Serial.println(output[5]);
+    int buzz_c = final[5] - '0';
 
-    // for (int i = 0; i < output[5]; i ++)
-    // {
-    //   buzz(500);
-    //   delay(500);
-    // }
+    for (int i = 0; i < buzz_c; i ++)
+    {
+      buzz(500);
+      delay(500);
+    }
     
     mbedtls_aes_free( &aes );
     
   } else if (strcmp(opcode.c_str(), "init_encrypt") == 0) {
-    convert_hex(encrypted + 16, 16*3, encrypted_in.c_str());
+    convert_hex(encrypted + 8, 16*3, encrypted_in.c_str());
   }
 }
 
@@ -129,8 +130,7 @@ void setup() {
 
   Serial.begin(115200);
   
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_NETWORK);//, "enee408i");
+  WiFi.begin(WIFI_NETWORK, WIFI_NETWORK);
 
   while (WiFi.status() != WL_CONNECTED) {
     Serial.println("No Wifi!");
@@ -139,7 +139,7 @@ void setup() {
 
   client.onMessage(onMessageCallback);
 
-  client.connect("ws://192.168.1.142:7000");
+  client.connect("ws://192.168.1.251:7000");
 
   if (!client.available()) {
       Serial.println("Failed to connect (websocket)...");
@@ -161,7 +161,6 @@ void setup() {
   Serial.println("Sent message!");
 
 }
-
 
 void loop() {
   client.poll();
