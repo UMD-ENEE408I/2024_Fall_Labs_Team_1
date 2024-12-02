@@ -5,7 +5,7 @@ LineFollower robot;
 void setup() {
     Serial.begin(115200);
     robot.begin();
-    robot.setPID(2.0, 0.0, 50.0);  // Setting initial PID values
+    robot.setPID(2.0, 0.1, 50.0);  // Setting initial PID values
     robot.stopRobot();             // Stop the robot initially
     delay(1000);
 }
