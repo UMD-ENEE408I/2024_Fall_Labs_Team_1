@@ -1,35 +1,29 @@
 #include <Arduino.h>
-#include <ArduinoJson.h>
-#include <ArduinoWebsockets.h>
-#include <WiFi.h>
 #include "LineFollower.h"
-
-#define WIFI_NETWORK "enee408i"
-
-using namespace websockets;
-WebsocketsClient client;
+#include "comms.h"
 
 uint8_t send_buff[500];
 
 LineFollower lf;
 
-enum STATE {
-  START,
-  START2,
-  START3,
-  START4,
-  START5,
-  UNKNOWN,
-  NO_MANS_LAND,
-  COLOR_SQUARE,
-  LISTEN,
-  NAV,
-  DOTTED_NAV,
-  COLOR_NAV,
-};
+int delta_checkpoint = 5001;
 
-STATE curr;
-STATE prev;
+
+#define  START 1
+#define  START2 2 
+#define  START3 3
+#define  START4 4
+#define  START5 5
+#define  UNKNOWN 6
+#define  NO_MANS_LAND 7
+#define  COLOR_SQUARE 8
+#define  LISTEN 9
+#define  NAV 10
+#define  DOTTED_NAV 11
+#define  COLOR_NAV 12
+
+int curr;
+int prev;
 
 int audio_result;
 
@@ -40,6 +34,11 @@ void setup() {
   lf.begin();
   lf.setPID(2.0, 0.1, 50.0);  // Setting initial PID values
   lf.stopRobot();             // Stop the robot initially
+
+  delay(1000);
+
+  comms_begin();
+
   delay(1000);
 }
 
@@ -58,11 +57,13 @@ void loop() {
     
     delay(1000);
     lf.turn_motors2(1);
-    delay(2000);
+    delay(750);
     lf.stopRobot();
     delay(1000);
 
-    curr = (enum STATE)(curr + 1);
+    curr = prev+1;
+    Serial.print("WE ARE NOW CURR ");
+    Serial.println(curr);
   break;
 
   case START:
@@ -86,16 +87,17 @@ void loop() {
       {
         lf.stopRobot();
         delay(250);
-        lf.turn_motors2((audio_result == 1));
-        delay(2000);
+        lf.turn_motors3((audio_result == 1));
+        delay(1000);
         lf.stopRobot();
         delay(250);
 
+        prev = curr;
         curr = START5;
       }
     }
 
-    if (count > 9)
+    if (count > 9 && delta_checkpoint > 200)
     {
       lf.stopRobot();
       prev = curr;
@@ -107,6 +109,8 @@ void loop() {
       {
         curr = LISTEN;
       }
+
+      delta_checkpoint = 0;
     }
 
     break;
@@ -124,7 +128,7 @@ void loop() {
     {
       Serial.print(" | Side (1 = left, 2 = right): ");
       Serial.println(side);
-      dir = (side == 2);
+      dir = (side == 1);
       lf.turn_motors(dir);
       pos = lf.getPosition(&count, NULL);
       Serial.println(count);
@@ -142,8 +146,8 @@ void loop() {
     audio_result = 0; // 0 left 1 right
 
     delay(1000);
-    lf.turn_motors2((audio_result == 1));
-    delay(2000);
+    lf.turn_motors3((audio_result == 1));
+    delay(1000);
     lf.stopRobot();
     delay(1000);
     
@@ -157,6 +161,9 @@ void loop() {
     break;
   }
 
+  comms_loop();
+  delta_checkpoint++;
+  //Serial.println(delta_checkpoint);
   delay(10);
 }
 

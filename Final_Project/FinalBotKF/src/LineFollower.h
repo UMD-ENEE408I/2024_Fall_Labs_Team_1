@@ -19,6 +19,7 @@ public:
     float getPosition(float *count, int *side);
     void turn_motors(int cc);
     void turn_motors2(int cc);
+    void turn_motors3(int cc);
 
 private:
     void readADC();

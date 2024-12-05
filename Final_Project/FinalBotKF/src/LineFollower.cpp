@@ -72,7 +72,7 @@ void LineFollower::digitalConvert() {
         Serial.print(lineArray[i]);
         Serial.print(" ");
     }
-    //Serial.println();
+    Serial.println();
 }
 
 float LineFollower::getPosition(float *count, int *side) {
@@ -97,8 +97,8 @@ float LineFollower::getPosition(float *count, int *side) {
     }
 
     float position = ((*count > 0.0 && sum > 0.0) ? (sum / (*count)) : 0);
-    Serial.print("Position: ");
-    Serial.print(position);
+    // Serial.print("Position: ");
+    // Serial.print(position);
 
     if (side != NULL)
     {
@@ -200,14 +200,24 @@ void LineFollower::turn_motors(int cc)
 void LineFollower::turn_motors2(int cc)
 {
    if (cc) {
-    M1_forward(base_pid);
-    //M2_backward(base_pid);
-    } else {
-    //M1_backward(base_pid);
+    M1_forward(base_pid+17);
     M2_forward(base_pid);
+    } else {
+    M1_forward(base_pid);
+    M2_forward(base_pid+17);
     }
 }
 
+void LineFollower::turn_motors3(int cc)
+{
+   if (cc) {
+    M1_forward(base_pid);
+    //M2_forward(base_pid);
+    } else {
+    //M1_forward(base_pid);
+    M2_forward(base_pid);
+    }
+}
 
 void LineFollower::turnCorner_new(float angle_rad, bool cc) {
     sensors_event_t a, g, temp;
