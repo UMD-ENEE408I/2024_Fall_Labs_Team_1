@@ -11,16 +11,18 @@ class LineFollower {
 public:
     LineFollower();
     void begin();
-    void update();
+    float update(float *count, int *side);
     void setPID(float kp, float ki, float kd);
     void stopRobot();
     void turnCorner(bool cc);
-    void turnCorner_new(bool cc);
+    void turnCorner_new(float ang, bool cc);
+    float getPosition(float *count, int *side);
+    void turn_motors(int cc);
+    void turn_motors2(int cc);
 
 private:
     void readADC();
     void digitalConvert();
-    float getPosition();
     void M1_forward(int pwm_value);
     void M2_forward(int pwm_value);
     void M1_backward(int pwm_value);

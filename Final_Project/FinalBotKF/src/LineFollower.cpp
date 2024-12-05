@@ -67,26 +67,55 @@ void LineFollower::digitalConvert() {
         if (i < 6) lineArray[2 * i + 1] = (adc2_buf[i] > threshold) ? 0 : 1;
     }
     //Serial.println("Digital conversion complete.");
-    //Serial.print("lineArray: ");
+    Serial.print("lineArray: ");
     for (int i = 0; i < 13; i++) {
-        //Serial.print(lineArray[i]);
-        //Serial.print(" ");
+        Serial.print(lineArray[i]);
+        Serial.print(" ");
     }
     //Serial.println();
 }
 
-float LineFollower::getPosition() {
+float LineFollower::getPosition(float *count, int *side) {
+    readADC();
+    digitalConvert();
+
     float sum = 0.0;
-    float count = 0.0;
+    float sumL = 0.0;
+    float sumR = 0.0;
+    *count = 0.0;
     for (int i = 0; i < 13; i++) {
         if (lineArray[i] == 1) {
             sum += (float)i;
-            count++;
+            (*count)++;
+        }
+        if (i > 7) {
+            sumR += (float) i;
+        } else if (i < 6)
+        {
+            sumL += (float) i;
         }
     }
-    float position = (count != 0 ? sum / count : -1);
-    //Serial.print("Position: ");
-    //Serial.println(position);
+
+    float position = ((*count > 0.0 && sum > 0.0) ? (sum / (*count)) : 0);
+    Serial.print("Position: ");
+    Serial.print(position);
+
+    if (side != NULL)
+    {
+        if (sumR >= 3 && sum <= 4)
+        {
+            *side = 1;
+        }
+        else if (sumL >= 2 && sum <= 6)
+        {
+            *side = 2;
+        }
+        else
+        {
+            *side = 0;
+        }
+    }
+
     return position;
 }
 
@@ -157,8 +186,30 @@ void LineFollower::turn_to(float target, bool cc)
 
 }
 
+void LineFollower::turn_motors(int cc)
+{
+   if (cc) {
+    M1_forward(base_pid);
+    M2_backward(base_pid);
+    } else {
+    M1_backward(base_pid);
+    M2_forward(base_pid);
+    }
+}
 
-void LineFollower::turnCorner_new(bool cc) {
+void LineFollower::turn_motors2(int cc)
+{
+   if (cc) {
+    M1_forward(base_pid);
+    //M2_backward(base_pid);
+    } else {
+    //M1_backward(base_pid);
+    M2_forward(base_pid);
+    }
+}
+
+
+void LineFollower::turnCorner_new(float angle_rad, bool cc) {
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
     float currentAngle = 0.0;
@@ -168,20 +219,20 @@ void LineFollower::turnCorner_new(bool cc) {
     If the right turn overshoots, decrease this value (e.g., 0.90 → 0.88).
     If the right turn undershoots, increase this value (e.g., 0.90 → 0.92).
     */
-    const float rightTurnFactor = 0.90;
+    //const float rightTurnFactor = 0.90;
 
 
     if (cc) {
-    M1_forward(TURN_PWM);
-    M2_backward(TURN_PWM);
+    M1_forward(base_pid);
+    M2_backward(base_pid);
     } else {
-    M1_backward(TURN_PWM);
-    M2_forward(TURN_PWM * rightTurnFactor);
+    M1_backward(base_pid);
+    M2_forward(base_pid);
     }
     /*
     additiional tweaks Adjust the multiplier for clockwise turns (0.96, 0.98) to stop earlier or later.
     */
-   while (abs(currentAngle) < (cc ? TURN_ANGLE_RADIANS : TURN_ANGLE_RADIANS * 0.96 ) ) {
+   while (abs(currentAngle) < (angle_rad) ) {
         mpu.getEvent(&a, &g, &temp);
         unsigned long now = millis();
         float dt = (float)(now - lastTime) / 1000.0;
@@ -197,17 +248,16 @@ void LineFollower::turnCorner_new(bool cc) {
 
     M1_stop();
     M2_stop();
-    Serial.println("Finished 90-degree Turn.");
+    Serial.println("Finished Turn.");
 }
 
 
 
-void LineFollower::update() {
-    readADC();
-    digitalConvert();
-    float pos = getPosition();
+float LineFollower::update(float *count, int *side) {
+    float pos = getPosition(count, side);
+    (void) side;
 
-    if (pos != 0)
+    if (pos > 0)
     {
 
         float error = mid - pos;
@@ -225,23 +275,24 @@ void LineFollower::update() {
         M2_forward(leftWheelPWM);
 
         
-        Serial.print("Position: ");
-        Serial.print(pos);
-        Serial.print(" | Error: ");
-        Serial.print(error);
-        Serial.print(" | Right PWM: ");
-        Serial.print(rightWheelPWM);
-        Serial.print(" | Left PWM: ");
-        Serial.println(leftWheelPWM);
+        // Serial.print("Position: ");
+        // Serial.print(pos);
+        // Serial.print(" | Error: ");
+        // Serial.print(error);
+        // Serial.print(" | Right PWM: ");
+        // Serial.print(rightWheelPWM);
+        // Serial.print(" | Left PWM: ");
+        // Serial.println(leftWheelPWM);
         
         prev_error = error;
         prev_time = current_time;
         prev_pos = pos;
     } else {
-        Serial.println("");
+        //Serial.println("");
         M1_forward(0);
         M2_forward(0);
     }
 
-    delay(10);  // Adjust delay as needed
+    return pos;
+
 }
